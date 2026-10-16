@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<IsRoslynComponent>true</IsRoslynComponent>
+		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<RootNamespace>Luces.Mediator.SourceGen</RootNamespace>
+		<AssemblyName>Luces.Mediator.SourceGen</AssemblyName>
+		<NoWarn>$(NoWarn);RS1041;RS2008</NoWarn>
+		<IsPublishable>false</IsPublishable>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="5.9.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.9.0" PrivateAssets="all" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Remove="GeneratedSenderExtensions.cs" />
+		<EmbeddedResource Include="GeneratedSenderExtensions.cs" LogicalName="Luces.Mediator.SourceGen.Templates.GeneratedSenderExtensions.cs" />
+	</ItemGroup>
+</Project>

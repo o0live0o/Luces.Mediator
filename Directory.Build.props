@@ -1,0 +1,22 @@
+<Project>
+
+  <!--
+    Repository-wide MSBuild defaults, imported automatically by every project that lives at or
+    below this directory. Only settings that are genuinely shared belong here; anything that
+    differs per project (TargetFramework, Nullable, ImplicitUsings, package metadata, ...) stays
+    in the individual .csproj so local builds behave exactly like CI builds.
+  -->
+  <PropertyGroup>
+    <!-- Fallback package version. A release pipeline overrides it from the git tag, e.g.
+         dotnet pack -p:Version=1.2.3 (a command-line Version always wins over this default). -->
+    <Version Condition="'$(Version)' == ''">1.0.0</Version>
+
+    <LangVersion>latest</LangVersion>
+    <Deterministic>true</Deterministic>
+
+    <!-- Reproducible build: normalizes paths embedded in the PDB so artifacts match the source.
+         GitHub Actions exports CI=true, so this turns itself on only in the pipeline. -->
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true' or '$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+</Project>

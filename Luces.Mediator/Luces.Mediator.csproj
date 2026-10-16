@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<RootNamespace>Luces.Mediator</RootNamespace>
+		<AssemblyName>Luces.Mediator</AssemblyName>
+		<IsAotCompatible>true</IsAotCompatible>
+		<IsTrimmable>true</IsTrimmable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);CS1951;CS1735</NoWarn>
+		<IsPackable>true</IsPackable>
+		<PackageId>Luces.Mediator</PackageId>
+		<Authors>Anonymous</Authors>
+		<Description>(●'◡'●)</Description>
+		<PackageTags>mediator</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.13" />
+		<ProjectReference Include="..\Luces.Mediator.SourceGen\Luces.Mediator.SourceGen.csproj"
+			OutputItemType="Analyzer"
+			ReferenceOutputAssembly="false"
+			PrivateAssets="all"
+			GlobalPropertiesToRemove="PublishAot;PublishTrimmed;TrimMode;RuntimeIdentifier" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\README.md"
+			Pack="true"
+			PackagePath="README.md" />
+		<None Update="buildTransitive\Luces.Mediator.props"
+			Pack="true"
+			PackagePath="buildTransitive\Luces.Mediator.props" />
+		<None Include="..\Luces.Mediator.SourceGen\bin\$(Configuration)\netstandard2.0\Luces.Mediator.SourceGen.dll"
+			Pack="true"
+			PackagePath="analyzers\dotnet\cs\Luces.Mediator.SourceGen.dll"
+			Visible="false" />
+	</ItemGroup>
+
+</Project>

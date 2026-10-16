@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Luces.Mediator/Luces.Mediator.csproj" />
+  <Project Path="Luces.Mediator.SourceGen/Luces.Mediator.SourceGen.csproj" />
+</Solution>

@@ -1,0 +1,16 @@
+<Project>
+	<PropertyGroup>
+		<LucesMediatorExtensionsEnabled Condition="'$(LucesMediatorExtensionsEnabled)' == ''">true</LucesMediatorExtensionsEnabled>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<CompilerVisibleProperty Include="LucesMediatorExtensionsEnabled" />
+		<CompilerVisibleProperty Include="LucesMediatorExtensionsSenderType" />
+		<CompilerVisibleProperty Include="LucesMediatorExtensionsRequestType" />
+		<CompilerVisibleProperty Include="LucesMediatorExtensionsStreamTypeName" />
+		<CompilerVisibleProperty Include="LucesMediatorExtensionsNamespace" />
+		<CompilerVisibleProperty Include="LucesMediatorExtensionsClassName" />
+		<CompilerVisibleProperty Include="LucesMediatorExtensionsSendMethod" />
+		<CompilerVisibleProperty Include="LucesMediatorExtensionsStreamMethod" />
+	</ItemGroup>
+</Project>
