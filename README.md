@@ -1,12 +1,34 @@
 # Luces.Mediator
 
-Luces.Mediator 是面向 .NET 10 的轻量级 mediator 库。NuGet 包同时包含 `Luces.Mediator` API 和用于生成 `ISender` 类型推断扩展方法的 Source Generator。
+Luces.Mediator 是面向 .NET 10 的轻量级 mediator 库，采用 C# 12 编写。NuGet 包同时包含 `Luces.Mediator` 核心 API 和用于生成 `ISender` 类型推断扩展方法的 Source Generator。
+
+## 功能特性
+
+- **请求-处理器模式**：支持同步请求 (`IRequest<TResponse>`) 和流式请求 (`IStreamRequest<TResponse>`)
+- **通知发布**：支持串行发布 (`Publish`) 和并行发布 (`PublishParallel`)
+- **管道行为**：通过 `IPipelineBehavior` 实现请求处理管道，支持授权、验证、日志等横切关注点
+- **类型安全**：Source Generator 自动生成强类型的扩展方法，提供编译时类型推断
+- **值类型支持**：内置 `Unit` 结构用于无返回值的请求
 
 ## 安装
 
 ```sh
 dotnet add package Luces.Mediator
 ```
+
+## 核心接口
+
+| 接口 | 说明 |
+| --- | --- |
+| `IRequest<TResponse>` | 普通请求接口 |
+| `IStreamRequest<TResponse>` | 流式请求接口 |
+| `INotification` | 通知接口 |
+| `ISender` | 发送请求的入口 |
+| `IPublisher` | 发布通知的入口 |
+| `IRequestHandler<TRequest, TResponse>` | 请求处理器 |
+| `IStreamRequestHandler<TRequest, TResponse>` | 流式请求处理器 |
+| `INotificationHandler<TNotification>` | 通知处理器 |
+| `IPipelineBehavior<TRequest, TResponse>` | 管道行为 |
 
 ## 使用 Source Generator
 
@@ -20,6 +42,9 @@ public sealed record GetGreeting(string Name) : IRequest<string>;
 public sealed record WatchUpdates(string Topic) : IStreamRequest<Update>;
 
 public sealed record Update(string Message);
+
+// 无返回值的请求使用 Unit
+public sealed record LogRequest(string Message) : IRequest<Unit>;
 ```
 
 安装 `Luces.Mediator` 后，Source Generator 会为这些请求生成 `ISender` 扩展方法。默认生成命名空间与 `ISender` 相同（`Luces.Mediator`），因此可以直接调用：
@@ -96,3 +121,58 @@ string greeting = await sender.Send<GetGreeting, string>(new GetGreeting("Ada"),
 - `Send` 会在执行管道之前构造处理器，即使是会短路的授权/权限管道行为，处理器也会被构造（影响昂贵依赖与构造异常）。
 - `PublishParallel` 的所有处理器复用同一个 DI scope；非线程安全的 scoped 依赖（例如同一个 EF Core `DbContext`）可能被并发使用，此时应改用串行 `Publish` 或在业务层自行隔离。并行只并发处理器内部的异步部分，长时间的同步工作仍会阻塞其他处理器启动。
 - 处理器异常会被聚合为带 `HandlerType` 的 `NotificationHandlerException` 并由 `PublishParallel` 抛出为 `AggregateException`；调用方取消与真实错误同时发生时以真实错误优先；处理器解析（DI 工厂）阶段的异常不会包装进 `NotificationHandlerException`。
+
+## 示例：请求处理器
+
+```csharp
+// 定义请求
+public sealed record GetUser(int Id) : IRequest<User?>;
+
+public sealed record User(int Id, string Name);
+
+// 定义处理器
+public sealed class GetUserHandler : IRequestHandler<GetUser, User?>
+{
+    private readonly IUserRepository _repository;
+
+    public GetUserHandler(IUserRepository repository) => _repository = repository;
+
+    public async Task<User?> Handle(GetUser request, CancellationToken cancellationToken)
+    {
+        return await _repository.GetByIdAsync(request.Id, cancellationToken);
+    }
+}
+```
+
+## 示例：管道行为
+
+```csharp
+public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+    where TRequest : IRequest<TResponse>
+{
+    public async ValueTask<TResponse> Handle(
+        TRequest request,
+        CancellationToken cancellationToken,
+        RequestHandlerDelegate<TResponse> next)
+    {
+        Console.WriteLine($"Handling {typeof(TRequest).Name}");
+        var response = await next(cancellationToken);
+        Console.WriteLine($"Handled {typeof(TRequest).Name}");
+        return response;
+    }
+}
+```
+
+## 依赖注入注册示例
+
+```csharp
+// 在 ASP.NET Core 或其他 DI 容器中注册
+services.AddSingleton<ISender>(sp => new Sender(sp));
+services.AddSingleton<IPublisher>(sp => new Publisher(sp));
+
+// 注册处理器
+services.AddTransient<IRequestHandler<GetGreeting, string>, GetGreetingHandler>();
+
+// 注册管道行为（按顺序执行）
+services.AddTransient<IPipelineBehavior<GetGreeting, string>, LoggingBehavior<GetGreeting, string>>();
+```
