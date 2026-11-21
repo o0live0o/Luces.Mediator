@@ -189,7 +189,7 @@ public sealed class Publisher : IPublisher
         {
             return null;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             return new NotificationHandlerException(handler.GetType(), ex);
         }

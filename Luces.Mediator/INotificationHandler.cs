@@ -1,4 +1,4 @@
-namespace Luces.Mediator;
+﻿namespace Luces.Mediator;
 
 /// <summary>Handles a notification; multiple handlers may be registered for one notification.</summary>
 /// <typeparam name="TNotification">The notification type to handle.</typeparam>

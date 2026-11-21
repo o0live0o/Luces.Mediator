@@ -1,4 +1,4 @@
-using Luces.Mediator.SourceGen.Configuration;
+﻿using Luces.Mediator.SourceGen.Configuration;
 using Luces.Mediator.SourceGen.Discovery;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -22,10 +22,16 @@ public class SenderExtensionsGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(combined, static (productionContext, value) =>
         {
             var ((symbols, compilation), options) = value;
-            if (!options.Enabled || !options.Validate(productionContext)) return;
+            if (!options.Enabled || !options.Validate(productionContext))
+            {
+                return;
+            }
 
             var model = SenderExtensionsDiscovery.Discover(productionContext, compilation, symbols, options);
-            if (model is null) return;
+            if (model is null)
+            {
+                return;
+            }
 
             var source = SenderExtensionsEmitter.Emit(model.Value, options);
             productionContext.AddSource("GeneratedSenderExtensions.g.cs", SourceText.From(source, Encoding.UTF8));

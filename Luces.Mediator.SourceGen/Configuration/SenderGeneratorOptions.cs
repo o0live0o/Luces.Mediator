@@ -1,4 +1,4 @@
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using System;
@@ -139,11 +139,11 @@ internal readonly record struct SenderGeneratorOptions(
     }
 
     // A plain identifier: no qualification, nested separator or generic arity, and not a reserved keyword.
-    private static readonly char[] DisallowedIdentifierCharacters = { '.', '+', '`' };
+    private static readonly char[] s_disallowedIdentifierCharacters = { '.', '+', '`' };
 
     private static bool IsValidSimpleIdentifier(string value)
     {
-        return value.IndexOfAny(DisallowedIdentifierCharacters) < 0
+        return value.IndexOfAny(s_disallowedIdentifierCharacters) < 0
             && SyntaxFacts.IsValidIdentifier(value)
             && SyntaxFacts.GetKeywordKind(value) == SyntaxKind.None;
     }

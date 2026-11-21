@@ -1,19 +1,19 @@
-using System;
+﻿using System;
 using System.Text;
 
 namespace Luces.Mediator.SourceGen;
 
 internal sealed class CodeWriter
 {
-    private const int _indentSize = 4;
-    private readonly StringBuilder _sb = new StringBuilder();
+    private const int IndentSize = 4;
+    private readonly StringBuilder _sb = new();
     private int _indentLevel;
 
     public void WriteLine(string line = "")
     {
         if (line.Length > 0)
         {
-            _sb.Append(' ', checked(_indentLevel * _indentSize));
+            _sb.Append(' ', checked(_indentLevel * IndentSize));
             _sb.Append(line);
         }
         _sb.Append("\n");
@@ -66,7 +66,9 @@ internal sealed class CodeWriter
         {
             var current = _writer;
             if (current is null)
+            {
                 return;
+            }
 
             _writer = null;
             current.EndScope(closingLine);

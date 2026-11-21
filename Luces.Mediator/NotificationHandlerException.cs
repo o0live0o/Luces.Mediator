@@ -1,4 +1,4 @@
-namespace Luces.Mediator;
+﻿namespace Luces.Mediator;
 
 /// <summary>Indicates a notification handler execution failure and carries the failing handler's type.</summary>
 public sealed class NotificationHandlerException : Exception

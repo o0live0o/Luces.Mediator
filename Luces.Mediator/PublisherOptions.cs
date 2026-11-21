@@ -1,4 +1,4 @@
-namespace Luces.Mediator;
+﻿namespace Luces.Mediator;
 
 /// <summary>
 /// Notification publishing options for <see cref="Publisher"/>.

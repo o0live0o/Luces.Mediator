@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace Luces.Mediator.Tests;
 
@@ -460,9 +460,9 @@ public sealed class PublisherTests
 
     private sealed class GatedHandler : INotificationHandler<StockMoved>
     {
-        private static int _completed;
+        private static int s_completed;
 
-        public static int CompletedCount => Volatile.Read(ref _completed);
+        public static int CompletedCount => Volatile.Read(ref s_completed);
 
         private readonly TaskCompletionSource _gate;
         private readonly int _expectedStarts;
@@ -477,16 +477,16 @@ public sealed class PublisherTests
         {
             // Wait until all parallel instances are inside Handle; only possible with
             // concurrent scheduling.
-            if (Interlocked.Increment(ref _started) == _expectedStarts)
+            if (Interlocked.Increment(ref s_started) == _expectedStarts)
             {
                 _gate.SetResult();
             }
 
             await _gate.Task.WaitAsync(ct);
-            Interlocked.Increment(ref _completed);
+            Interlocked.Increment(ref s_completed);
         }
 
-        private static int _started;
+        private static int s_started;
     }
 
     /// <summary>A handler that blocks until the token is cancelled, then throws OCE.</summary>

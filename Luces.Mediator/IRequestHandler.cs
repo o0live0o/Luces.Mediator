@@ -1,4 +1,4 @@
-namespace Luces.Mediator;
+﻿namespace Luces.Mediator;
 
 /// <summary>Handles a request and returns a response.</summary>
 /// <typeparam name="TRequest">The request type.</typeparam>

@@ -1,4 +1,4 @@
-namespace Luces.Mediator;
+﻿namespace Luces.Mediator;
 
 /// <summary>Publishes notifications.</summary>
 public interface IPublisher

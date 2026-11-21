@@ -1,4 +1,4 @@
-using Luces.Mediator.SourceGen;
+﻿using Luces.Mediator.SourceGen;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -12,7 +12,7 @@ namespace Luces.Mediator.SourceGen.Tests;
 /// </summary>
 public sealed class GeneratorTestContext
 {
-    private static readonly Lazy<ImmutableArray<MetadataReference>> LazyReferences = new(LoadReferences);
+    private static readonly Lazy<ImmutableArray<MetadataReference>> s_lazyReferences = new(LoadReferences);
 
     public GeneratorDriver Driver { get; }
     public ImmutableArray<Diagnostic> Diagnostics { get; }
@@ -47,7 +47,7 @@ public sealed class GeneratorTestContext
         IDictionary<string, string>? buildProperties = null)
     {
         var optionsProvider = new TestAnalyzerConfigOptions(buildProperties);
-        var references = LazyReferences.Value;
+        var references = s_lazyReferences.Value;
         if (!coreLibraryReferenced)
         {
             references = references.RemoveAll(r => r.Display?.Contains("Luces.Mediator.dll") == true);

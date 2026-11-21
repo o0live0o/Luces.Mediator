@@ -1,4 +1,4 @@
-namespace Luces.Mediator;
+﻿namespace Luces.Mediator;
 
 /// <summary>Request interface: types implementing it can be sent via <see cref="ISender.Send{TRequest,TResponse}"/> and produce a <typeparamref name="TResponse"/> response.</summary>
 /// <typeparam name="TResponse">The response type; use <see cref="Unit"/> when there is no return value.</typeparam>

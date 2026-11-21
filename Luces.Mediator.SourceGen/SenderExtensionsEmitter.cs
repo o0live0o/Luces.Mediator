@@ -1,11 +1,11 @@
-using Luces.Mediator.SourceGen.Configuration;
-using Luces.Mediator.SourceGen.Discovery;
-using Microsoft.CodeAnalysis;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Luces.Mediator.SourceGen.Configuration;
+using Luces.Mediator.SourceGen.Discovery;
+using Microsoft.CodeAnalysis;
 
 namespace Luces.Mediator.SourceGen;
 
@@ -29,9 +29,15 @@ internal static class SenderExtensionsEmitter
         foreach (var method in model.Methods)
         {
             var visibility = GetVisibility(model.Sender, method);
-            if (visibility is null) continue;
+            if (visibility is null)
+            {
+                continue;
+            }
 
-            if (emittedCount > 0) writer.WriteLine();
+            if (emittedCount > 0)
+            {
+                writer.WriteLine();
+            }
 
             WriteMethod(writer, method, model.Sender.ToFqn(), visibility, options);
             emittedCount++;
@@ -132,18 +138,33 @@ internal static class SenderExtensionsEmitter
             {
                 parts.Add(typeParameter.ReferenceTypeConstraintNullableAnnotation == NullableAnnotation.Annotated ? "class?" : "class");
             }
-            else if (typeParameter.HasUnmanagedTypeConstraint) parts.Add("unmanaged");
-            else if (typeParameter.HasValueTypeConstraint) parts.Add("struct");
-            else if (typeParameter.HasNotNullConstraint) parts.Add("notnull");
+            else if (typeParameter.HasUnmanagedTypeConstraint)
+            {
+                parts.Add("unmanaged");
+            }
+            else if (typeParameter.HasValueTypeConstraint)
+            {
+                parts.Add("struct");
+            }
+            else if (typeParameter.HasNotNullConstraint)
+            {
+                parts.Add("notnull");
+            }
 
             foreach (var constraint in typeParameter.ConstraintTypes)
             {
                 parts.Add(constraint.ToFqn());
             }
 
-            if (typeParameter.HasConstructorConstraint) parts.Add("new()");
+            if (typeParameter.HasConstructorConstraint)
+            {
+                parts.Add("new()");
+            }
 
-            if (parts.Count == 0) continue;
+            if (parts.Count == 0)
+            {
+                continue;
+            }
 
             writer.WriteLine($"where {SymbolExtensions.EscapeIdentifier(typeParameter.Name)} : {string.Join(", ", parts)}");
         }

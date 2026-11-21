@@ -1,4 +1,4 @@
-// Polyfills for pre-.NET6 targets. Guarded so modern TFMs keep using the BCL implementations.
+﻿// Polyfills for pre-.NET6 targets. Guarded so modern TFMs keep using the BCL implementations.
 // Block-scoped namespaces throughout: a file-scoped namespace cannot follow type declarations.
 #if !NET6_0_OR_GREATER
 

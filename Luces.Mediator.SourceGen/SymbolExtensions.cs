@@ -1,4 +1,4 @@
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
@@ -8,11 +8,11 @@ namespace Luces.Mediator.SourceGen;
 
 internal static class SymbolExtensions
 {
-    private static readonly SymbolDisplayFormat FullyQualified = SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
+    private static readonly SymbolDisplayFormat s_fullyQualified = SymbolDisplayFormat.FullyQualifiedFormat.AddMiscellaneousOptions(SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
 
     public static string ToFqn(this ITypeSymbol symbol)
     {
-        return symbol.ToDisplayString(FullyQualified);
+        return symbol.ToDisplayString(s_fullyQualified);
     }
 
     /// <summary>
@@ -40,7 +40,10 @@ internal static class SymbolExtensions
 
     public static string? ToFqnNoGlobal(this INamespaceSymbol symbol)
     {
-        if (symbol.IsGlobalNamespace) return null;
+        if (symbol.IsGlobalNamespace)
+        {
+            return null;
+        }
 
         var parts = new Stack<string>();
         for (var current = symbol;

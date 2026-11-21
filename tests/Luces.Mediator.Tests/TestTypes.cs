@@ -1,4 +1,4 @@
-using Luces.Mediator;
+﻿using Luces.Mediator;
 
 namespace Luces.Mediator.Tests;
 

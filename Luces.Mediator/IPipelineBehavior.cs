@@ -1,4 +1,4 @@
-namespace Luces.Mediator;
+﻿namespace Luces.Mediator;
 
 /// <summary>A request pipeline behavior wrapping the handler call, composed outer-to-inner in DI registration order.</summary>
 /// <typeparam name="TRequest">The request type.</typeparam>
