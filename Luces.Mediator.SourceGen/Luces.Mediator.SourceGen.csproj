@@ -5,6 +5,8 @@
 		<ImplicitUsings>disable</ImplicitUsings>
 		<IsRoslynComponent>true</IsRoslynComponent>
 		<EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+		<Nullable>enable</Nullable>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
 		<RootNamespace>Luces.Mediator.SourceGen</RootNamespace>
 		<AssemblyName>Luces.Mediator.SourceGen</AssemblyName>
 		<NoWarn>$(NoWarn);RS1041;RS2008</NoWarn>

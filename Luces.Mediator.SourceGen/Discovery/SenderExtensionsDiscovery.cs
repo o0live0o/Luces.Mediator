@@ -41,7 +41,7 @@ internal static class SenderExtensionsDiscovery
 
         if (request is null && streamRequest is null) return null;
 
-        var methods = DiscoverMethods(context, symbols, request, streamRequest, options);
+        var methods = DiscoverMethods(context, symbols.OfType<INamedTypeSymbol>().ToImmutableArray(), request!, streamRequest!, options);
 
         if (methods.IsDefaultOrEmpty) return null;
 
@@ -63,7 +63,7 @@ internal static class SenderExtensionsDiscovery
 
         if (responses.Count > 1)
         {
-            var distinct = responses.Distinct<ITypeSymbol>(SymbolEqualityComparer.Default).ToList();
+            var distinct = responses.OfType<ITypeSymbol>().Distinct<ITypeSymbol>(SymbolEqualityComparer.Default).ToList();
 
             if (distinct.Count > 1)
             {
@@ -71,10 +71,11 @@ internal static class SenderExtensionsDiscovery
                 return;
             }
 
-            responses = distinct;
+            responses.Clear();
+            responses.AddRange(distinct);
         }
 
-        methods.Add(new SenderExtensionMethod(isStream, request, responses[0]));
+        methods.Add(new SenderExtensionMethod(isStream, request, responses[0]!));
     }
 
     private static ImmutableArray<SenderExtensionMethod> DiscoverMethods(SourceProductionContext context, ImmutableArray<INamedTypeSymbol> symbols, INamedTypeSymbol request, INamedTypeSymbol streamRequest, SenderGeneratorOptions options)
