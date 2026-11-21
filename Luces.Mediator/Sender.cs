@@ -1,32 +1,47 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace Luces.Mediator;
 
+/// <summary>
+/// The default <see cref="ISender"/> implementation; the handler is resolved lazily at the
+/// pipeline terminal (exactly one registration), with behaviors composed outer-to-inner
+/// in DI registration order.
+/// </summary>
 public sealed class Sender : ISender
 {
     private readonly IServiceProvider _serviceProvider;
 
+    /// <summary>Creates the sender.</summary>
+    /// <param name="serviceProvider">The service provider used to resolve handlers and behaviors; may be a scoped or root provider.</param>
     public Sender(IServiceProvider serviceProvider)
     {
-        ArgumentNullException.ThrowIfNull(serviceProvider);
+        Guard.NotNull(serviceProvider);
         _serviceProvider = serviceProvider;
     }
+
+    /// <summary>Sends the stream request and returns the response stream; the handler is resolved as exactly one registration (no pipeline behaviors).</summary>
     public IAsyncEnumerable<TResponse> CreateStream<TRequest, TResponse>(TRequest request, CancellationToken ct = default) where TRequest : IStreamRequest<TResponse>
     {
-        ArgumentNullException.ThrowIfNull(request);
+        Guard.NotNull(request);
 
         var handler = GetHandler<IStreamRequestHandler<TRequest, TResponse>>();
         return handler.Handle(request, ct);
     }
 
+    /// <summary>Sends the request and returns the response; the handler is resolved lazily at the pipeline terminal, with behaviors composed outer-to-inner in DI registration order.</summary>
     public ValueTask<TResponse> Send<TRequest, TResponse>(TRequest request, CancellationToken ct = default) where TRequest : IRequest<TResponse>
     {
-        ArgumentNullException.ThrowIfNull(request);
+        Guard.NotNull(request);
 
-        var handler = GetHandler<IRequestHandler<TRequest, TResponse>>();
         var behaviors = _serviceProvider.GetServices<IPipelineBehavior<TRequest, TResponse>>().ToArray();
 
-        RequestHandlerDelegate<TResponse> next = c => handler.Handle(request, c);
+        // The handler is resolved inside the terminal delegate: behaviors that short-circuit never
+        // trigger handler construction, so expensive dependencies are not built for nothing.
+        RequestHandlerDelegate<TResponse> next = c =>
+        {
+            var handler = GetHandler<IRequestHandler<TRequest, TResponse>>();
+            return handler.Handle(request, c);
+        };
 
         for (var i = behaviors.Length - 1; i >= 0; i--)
         {
@@ -49,3 +64,4 @@ public sealed class Sender : ISender
         };
     }
 }
+
