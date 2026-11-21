@@ -34,7 +34,7 @@
 		     graph already carries (CPM projects pinning 10.x are unaffected), so a low floor
 		     widens compatibility without downgrading anyone. -->
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"
-			Version="6.0.0"
+			Version="11.0.0"
 			Condition="'$(TargetFramework)' == 'netstandard2.0'" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"
 			Version="8.0.0"
