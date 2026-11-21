@@ -16,6 +16,20 @@ updates:
     commit-message:
       prefix: "chore(deps)"
 
+  - package-ecosystem: "nuget"
+    directory: "/tests/Luces.Mediator.Tests"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+
+  - package-ecosystem: "nuget"
+    directory: "/tests/Luces.Mediator.SourceGen.Tests"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(deps)"
+
   # Keeps actions/checkout, actions/setup-dotnet, NuGet/login, ... up to date.
   - package-ecosystem: "github-actions"
     directory: "/"

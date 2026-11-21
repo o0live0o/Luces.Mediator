@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+            11.0.x
+
+      - name: Restore
+        run: dotnet restore Luces.Mediator.slnx
+
+      # Zero-warning gate: any new compiler/analyzer warning fails the build outright.
+      - name: Build (warnings as errors)
+        run: dotnet build Luces.Mediator.slnx -c Release --no-restore /p:TreatWarningsAsErrors=true
+
+      # dotnet test / dotnet run execute once per TargetFramework against each real runtime,
+      # which is the actual "8/9/10/11 all work" verification.
+      - name: Test
+        run: dotnet test Luces.Mediator.slnx -c Release --no-build
+
+      # Packs the NuGet package the same way the release workflow does, proving the package
+      # pipeline still works before anything ships.
+      - name: Pack (smoke check)
+        run: dotnet pack Luces.Mediator/Luces.Mediator.csproj -c Release -o artifacts
+
+      # Consumes the packed .nupkg from a folder source like a real user would: proves the
+      # generator wiring, buildTransitive props, TFM asset selection, and runtime behavior
+      # on every supported runtime (8/9/10/11).
+      - name: Consumer smoke test
+        run: |
+          dotnet restore samples/ConsumerSmoke/ConsumerSmoke.csproj -p:SmokePackageVersion=1.0.0
+          dotnet build samples/ConsumerSmoke/ConsumerSmoke.csproj -c Release --no-restore
+          foreach ($tfm in @('net8.0','net9.0','net10.0','net11.0')) {
+            dotnet run --project samples/ConsumerSmoke/ConsumerSmoke.csproj -c Release -f $tfm --no-build
+          }
