@@ -1,38 +1,52 @@
 # Luces.Mediator
 
-Luces.Mediator 是面向 .NET 10 的轻量级 mediator 库，采用 C# 12 编写。NuGet 包同时包含 `Luces.Mediator` 核心 API 和用于生成 `ISender` 类型推断扩展方法的 Source Generator。
+[中文](README.zh-cn.md) | **English**
 
-## 功能特性
+Luces.Mediator is a lightweight mediator library for .NET (supports netstandard2.0 and .NET 8/9/10/11), written in C# 12. The NuGet package ships both the `Luces.Mediator` core API and a Source Generator that produces `ISender` type-inference extension methods.
 
-- **请求-处理器模式**：支持同步请求 (`IRequest<TResponse>`) 和流式请求 (`IStreamRequest<TResponse>`)
-- **通知发布**：支持串行发布 (`Publish`) 和并行发布 (`PublishParallel`)
-- **管道行为**：通过 `IPipelineBehavior` 实现请求处理管道，支持授权、验证、日志等横切关注点
-- **类型安全**：Source Generator 自动生成强类型的扩展方法，提供编译时类型推断
-- **值类型支持**：内置 `Unit` 结构用于无返回值的请求
+## Features
 
-## 安装
+- **Request/handler pattern**: sync requests (`IRequest<TResponse>`) and stream requests (`IStreamRequest<TResponse>`)
+- **Notification publishing**: serial (`Publish`) and concurrent (`PublishParallel`)
+- **Pipeline behaviors**: cross-cutting concerns (authorization, validation, logging, ...) via `IPipelineBehavior`
+- **Type safety**: the Source Generator emits strongly typed extension methods with compile-time type inference
+- **Value type support**: built-in `Unit` struct for requests without a return value
+
+## Installation
 
 ```sh
 dotnet add package Luces.Mediator
 ```
 
-## 核心接口
+## Development
 
-| 接口 | 说明 |
+```sh
+dotnet test Luces.Mediator.slnx    # run all unit tests (core library + Source Generator)
+dotnet pack Luces.Mediator/Luces.Mediator.csproj -c Release -o artifacts
+```
+
+Tests live under `tests/`: `Luces.Mediator.Tests` covers the `Sender`/`Publisher` behavioral contracts (pipeline order, cancellation semantics, exception aggregation), and `Luces.Mediator.SourceGen.Tests` drives the generator in memory via `CSharpGeneratorDriver`, covering request discovery, the MSBuild configuration matrix, and the MED001–MED007 diagnostics.
+
+The core library targets five frameworks: `netstandard2.0`, `net8.0`, `net9.0`, `net10.0`, and `net11.0` (nuget.org's Frameworks panel shows the full support matrix for .NET 8/9/10/11 and .NET Framework/legacy runtimes). `netstandard2.0` covers .NET Framework and older runtimes, and each `net8.0`–`net11.0` asset is selected by the nearest matching modern .NET project. `samples/ConsumerSmoke` is an end-to-end smoke project — `dotnet pack` into `samples/ConsumerSmoke/packages` first, then `dotnet run --project samples/ConsumerSmoke -f <tfm>`. It consumes a real .nupkg (not a project reference) to validate generator wiring, the buildTransitive props, TFM asset selection, and runtime behavior, running once per runtime for net8.0/net9.0/net10.0/net11.0. CI runs the same flow after packing. The repo `global.json` requires the .NET 11 SDK (which can build all the lower TFMs).
+
+## Core interfaces
+
+| Interface | Description |
 | --- | --- |
-| `IRequest<TResponse>` | 普通请求接口 |
-| `IStreamRequest<TResponse>` | 流式请求接口 |
-| `INotification` | 通知接口 |
-| `ISender` | 发送请求的入口 |
-| `IPublisher` | 发布通知的入口 |
-| `IRequestHandler<TRequest, TResponse>` | 请求处理器 |
-| `IStreamRequestHandler<TRequest, TResponse>` | 流式请求处理器 |
-| `INotificationHandler<TNotification>` | 通知处理器 |
-| `IPipelineBehavior<TRequest, TResponse>` | 管道行为 |
+| `IRequest<TResponse>` | Plain request interface |
+| `IStreamRequest<TResponse>` | Stream request interface |
+| `INotification` | Notification interface |
+| `ISender` | Entry point for sending requests |
+| `IPublisher` | Entry point for publishing notifications |
+| `IRequestHandler<TRequest, TResponse>` | Request handler |
+| `IStreamRequestHandler<TRequest, TResponse>` | Stream request handler |
+| `INotificationHandler<TNotification>` | Notification handler |
+| `IPipelineBehavior<TRequest, TResponse>` | Pipeline behavior |
+| `PublisherOptions` | `Publisher` parallel-publish configuration (per-handler isolated child scopes) |
 
-## 使用 Source Generator
+## Using the Source Generator
 
-定义请求时实现 `IRequest<TResponse>`，或为流式请求实现 `IStreamRequest<TResponse>`：
+Implement `IRequest<TResponse>` for plain requests, or `IStreamRequest<TResponse>` for stream requests:
 
 ```csharp
 using Luces.Mediator;
@@ -43,11 +57,11 @@ public sealed record WatchUpdates(string Topic) : IStreamRequest<Update>;
 
 public sealed record Update(string Message);
 
-// 无返回值的请求使用 Unit
+// Requests without a return value use Unit
 public sealed record LogRequest(string Message) : IRequest<Unit>;
 ```
 
-安装 `Luces.Mediator` 后，Source Generator 会为这些请求生成 `ISender` 扩展方法。默认生成命名空间与 `ISender` 相同（`Luces.Mediator`），因此可以直接调用：
+After installing `Luces.Mediator`, the Source Generator emits `ISender` extension methods for these requests. The generated namespace defaults to the `ISender` namespace (`Luces.Mediator`), so you can call them directly:
 
 ```csharp
 string greeting = await sender.Send(new GetGreeting("Ada"), cancellationToken);
@@ -58,11 +72,11 @@ await foreach (var update in sender.CreateStream(new WatchUpdates("news"), cance
 }
 ```
 
-生成的扩展方法会根据请求类型推断响应类型，底层仍调用 `ISender.Send<TRequest, TResponse>` 或 `ISender.CreateStream<TRequest, TResponse>`。请求处理器和 `ISender` 的创建、依赖注入注册由应用自行配置。
+The generated extension methods infer the response type from the request type and ultimately call `ISender.Send<TRequest, TResponse>` or `ISender.CreateStream<TRequest, TResponse>`. Creating handlers and `ISender`, plus DI registration, are the application's responsibility.
 
-## 配置 Source Generator
+## Configuring the Source Generator
 
-可以在应用的 `.csproj` 中配置生成器。默认情况下生成器已启用，未指定的选项使用表格中的默认值：
+Configure the generator in your app's `.csproj`. The generator is enabled by default; options not set fall back to the table's defaults:
 
 ```xml
 <PropertyGroup>
@@ -74,63 +88,64 @@ await foreach (var update in sender.CreateStream(new WatchUpdates("news"), cance
 </PropertyGroup>
 ```
 
-配置自定义生成命名空间后，调用扩展方法的源文件需要导入该命名空间：
+After configuring a custom namespace, source files calling the extension methods must import it:
 
 ```csharp
 using MyApp.Generated;
 ```
 
-支持的 MSBuild 属性如下：
+Supported MSBuild properties:
 
-| 属性 | 默认值 | 说明 |
+| Property | Default | Description |
 | --- | --- | --- |
-| `LucesMediatorExtensionsEnabled` | `true` | 是否启用生成器。设置为 `false` 可关闭生成。 |
-| `LucesMediatorExtensionsSenderType` | `Luces.Mediator.ISender` | 要查找并扩展的 sender 接口全名。 |
-| `LucesMediatorExtensionsRequestType` | `Luces.Mediator.IRequest` | 请求接口全名，接口应有一个类型参数。 |
-| `LucesMediatorExtensionsStreamTypeName` | `Luces.Mediator.IStreamRequest` | 流式请求接口全名，接口应有一个类型参数。 |
-| `LucesMediatorExtensionsNamespace` | sender 接口所在的命名空间 | 生成代码的命名空间。 |
-| `LucesMediatorExtensionsClassName` | `SenderExtensions` | 生成的静态扩展类名。 |
-| `LucesMediatorExtensionsSendMethod` | `Send` | 普通请求生成的扩展方法名。 |
-| `LucesMediatorExtensionsStreamMethod` | `CreateStream` | 流式请求生成的扩展方法名。 |
+| `LucesMediatorExtensionsEnabled` | `true` | Enables the generator. Set to `false` to turn generation off. |
+| `LucesMediatorExtensionsSenderType` | `Luces.Mediator.ISender` | Fully qualified name of the sender interface to find and extend. |
+| `LucesMediatorExtensionsRequestType` | `Luces.Mediator.IRequest` | Fully qualified request interface name; it must have one type parameter. |
+| `LucesMediatorExtensionsStreamTypeName` | `Luces.Mediator.IStreamRequest` | Fully qualified stream request interface name. |
+| `LucesMediatorExtensionsNamespace` | The sender interface's namespace | Namespace for generated code. |
+| `LucesMediatorExtensionsClassName` | `SenderExtensions` | Name of the generated static extension class. |
+| `LucesMediatorExtensionsSendMethod` | `Send` | Generated method name for plain requests. |
+| `LucesMediatorExtensionsStreamMethod` | `CreateStream` | Generated method name for stream requests. |
 
-可将这些属性放在应用项目的 `<PropertyGroup>` 中；若要对同一目录下多个项目生效，也可以放入 `Directory.Build.props`。修改 `SenderType`、`RequestType` 或 `StreamTypeName` 时，请确保对应接口存在于编译目标中，并且接口全名与配置一致。
+These properties can live in the app project's `<PropertyGroup>`; for multiple projects under the same directory, put them in `Directory.Build.props`. When changing `SenderType`, `RequestType`, or `StreamTypeName`, make sure the interface exists in the compilation target and its full name matches the configuration.
 
-## 行为契约
+## Behavioral contracts
 
-### 请求发现的编译范围
+### Compilation scope of request discovery
 
-生成器只为**当前编译**中的请求类型生成扩展方法；引用程序集（例如单独的 Contracts 项目）中定义的请求不会被自动发现。如果请求类型位于单独的项目，请在定义它们的项目中启用同一生成器（生成的扩展方法默认与 `ISender` 同命名空间并可直接引用，且不会因可见性产生重复重载），或者在调用方改用显式泛型调用：
+The generator only emits extension methods for request types in the **current compilation**; requests defined in referenced assemblies (e.g. a separate Contracts project) are not discovered automatically. If request types live in a separate project, either enable the same generator in the project defining them (the generated extension methods share the `ISender` namespace by default, are directly referenceable, and do not produce duplicate overloads from visibility) or use explicit generic calls at the call site:
 
 ```csharp
 string greeting = await sender.Send<GetGreeting, string>(new GetGreeting("Ada"), cancellationToken);
 ```
 
-泛型外部类型中的嵌套请求、`private`、`file` 局部以及 `abstract` 类型都会被跳过，不会生成扩展方法。
+Requests nested in generic outer types, `private` and `file`-local types, and `abstract` types are skipped; no extension methods are generated for them.
 
-### 通知发布的取消语义
+### Cancellation semantics of notification publishing
 
-- `PublishParallel` 在开始前与全部处理器完成后都会检查调用方令牌。
-- `Publish` 作为串行发布，在入口、每次调度处理器之前以及全部处理器完成后都会检查调用方令牌：预取消的令牌不会解析或执行任何处理器，取消后不再调度后续处理器，最后一个处理器取消令牌但正常返回时也会抛出取消异常。这是相对早期版本的行为变化（成功返回的调用在令牌已取消时会改抛 `OperationCanceledException`）。
-- 该检查是尽力而为的调度边界检查，**不承诺强制终止已经开始执行的处理器**；已启动的处理器仍需按协作式约定自行观察令牌，发布器不会用 `Task.Run` 包装来模拟强制取消。
-- `Send` 与流式请求保持透传令牌的语义，由处理器侧按协作式约定处理。
+- `PublishParallel` checks the caller's token before starting and after all handlers complete.
+- `Publish`, being serial, checks the caller's token at entry, before scheduling each handler, and after all handlers complete: a pre-cancelled token resolves and executes no handlers, cancellation stops scheduling further handlers, and if the last handler cancels the token but returns normally, an OperationCanceledException is still thrown. This is a behavior change from earlier versions (calls that previously returned successfully now throw `OperationCanceledException` when the token is cancelled).
+- These checks are best-effort scheduling-boundary checks and **never force-terminate already-started handlers**; started handlers must still observe the token cooperatively. The publisher does not wrap handlers in `Task.Run` to fake forced cancellation.
+- `Send` and stream requests pass the token through unchanged; the handler side observes it cooperatively.
 
-### 空值、异常与并行依赖
+### Nulls, exceptions, and parallel dependencies
 
-- `Sender` 与 `Publisher` 的构造函数对 `IServiceProvider` 使用 `ArgumentNullException.ThrowIfNull`，错误会在构造入口立即暴露。
-- `Send`、`CreateStream`、`Publish`、`PublishParallel` 在入口拒绝 `null` 请求或通知并抛出 `ArgumentNullException`；值类型请求/通知不受影响。
-- `Send` 会在执行管道之前构造处理器，即使是会短路的授权/权限管道行为，处理器也会被构造（影响昂贵依赖与构造异常）。
-- `PublishParallel` 的所有处理器复用同一个 DI scope；非线程安全的 scoped 依赖（例如同一个 EF Core `DbContext`）可能被并发使用，此时应改用串行 `Publish` 或在业务层自行隔离。并行只并发处理器内部的异步部分，长时间的同步工作仍会阻塞其他处理器启动。
-- 处理器异常会被聚合为带 `HandlerType` 的 `NotificationHandlerException` 并由 `PublishParallel` 抛出为 `AggregateException`；调用方取消与真实错误同时发生时以真实错误优先；处理器解析（DI 工厂）阶段的异常不会包装进 `NotificationHandlerException`。
+- The `Sender` and `Publisher` constructors use `ArgumentNullException.ThrowIfNull` for `IServiceProvider`, surfacing mistakes at construction.
+- `Send`, `CreateStream`, `Publish`, and `PublishParallel` reject `null` requests/notifications at entry with `ArgumentNullException`; value-type requests/notifications are unaffected.
+- `Send` resolves the handler lazily: the handler is constructed inside the terminal pipeline delegate, so short-circuiting behaviors (e.g. authorization/permission pipelines) never trigger handler construction and expensive dependencies are not built for nothing. When a behavior short-circuits, the handler is never constructed; with no pipeline behaviors, a resolution failure (zero or multiple registrations) still throws synchronously at the call site, and with behaviors it surfaces when the pipeline reaches the terminal.
+- By default `PublishParallel` reuses the caller's single DI scope: non-thread-safe scoped dependencies (e.g. one EF Core `DbContext`) may be used concurrently, in which case switch to serial `Publish` or isolate at the business layer. Parallelism only overlaps the asynchronous parts inside handlers; long synchronous work still delays other handlers' startup.
+- Passing `new PublisherOptions { IsolateParallelHandlerScopes = true }` to the `Publisher` constructor gives each handler its own child scope (`CreateAsyncScope`), so scoped dependencies are no longer shared across handlers and are disposed when each handler completes. This mode requires `IServiceScopeFactory` to be registered in the container (`BuildServiceProvider` provides it by default); singleton handler instances are still shared across handlers (isolation protects scoped/transient dependencies only); handler activations increase (once in the counting phase plus once in each handler's child scope, except for singletons).
+- Handler exceptions are aggregated into a `NotificationHandlerException` carrying `HandlerType` and thrown by `PublishParallel` as an `AggregateException`; when caller cancellation and a real error happen together, the real error wins; exceptions from handler resolution (the DI factory) cannot be attributed to a handler instance, so they are not wrapped as `NotificationHandlerException` — the non-isolated path throws the raw exception synchronously at entry, and the isolated path throws it during the counting phase.
 
-## 示例：请求处理器
+## Example: request handler
 
 ```csharp
-// 定义请求
+// Define the request
 public sealed record GetUser(int Id) : IRequest<User?>;
 
 public sealed record User(int Id, string Name);
 
-// 定义处理器
+// Define the handler
 public sealed class GetUserHandler : IRequestHandler<GetUser, User?>
 {
     private readonly IUserRepository _repository;
@@ -144,7 +159,7 @@ public sealed class GetUserHandler : IRequestHandler<GetUser, User?>
 }
 ```
 
-## 示例：管道行为
+## Example: pipeline behavior
 
 ```csharp
 public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -152,8 +167,8 @@ public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRe
 {
     public async ValueTask<TResponse> Handle(
         TRequest request,
-        CancellationToken cancellationToken,
-        RequestHandlerDelegate<TResponse> next)
+        RequestHandlerDelegate<TResponse> next,
+        CancellationToken cancellationToken)
     {
         Console.WriteLine($"Handling {typeof(TRequest).Name}");
         var response = await next(cancellationToken);
@@ -163,16 +178,20 @@ public sealed class LoggingBehavior<TRequest, TResponse> : IPipelineBehavior<TRe
 }
 ```
 
-## 依赖注入注册示例
+## DI registration example
 
 ```csharp
-// 在 ASP.NET Core 或其他 DI 容器中注册
+// Register in ASP.NET Core or any other DI container
 services.AddSingleton<ISender>(sp => new Sender(sp));
 services.AddSingleton<IPublisher>(sp => new Publisher(sp));
 
-// 注册处理器
+// Optional: give each parallel handler its own child scope so scoped dependencies
+// are never shared concurrently
+// services.AddSingleton<IPublisher>(sp => new Publisher(sp, new PublisherOptions { IsolateParallelHandlerScopes = true }));
+
+// Register handlers
 services.AddTransient<IRequestHandler<GetGreeting, string>, GetGreetingHandler>();
 
-// 注册管道行为（按顺序执行）
+// Register pipeline behaviors (executed in registration order)
 services.AddTransient<IPipelineBehavior<GetGreeting, string>, LoggingBehavior<GetGreeting, string>>();
 ```
