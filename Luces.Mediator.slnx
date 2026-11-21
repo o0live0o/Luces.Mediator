@@ -1,4 +1,6 @@
 <Solution>
   <Project Path="Luces.Mediator/Luces.Mediator.csproj" />
   <Project Path="Luces.Mediator.SourceGen/Luces.Mediator.SourceGen.csproj" />
+  <Project Path="tests/Luces.Mediator.Tests/Luces.Mediator.Tests.csproj" />
+  <Project Path="tests/Luces.Mediator.SourceGen.Tests/Luces.Mediator.SourceGen.Tests.csproj" />
 </Solution>

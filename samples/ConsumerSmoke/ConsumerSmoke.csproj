@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- Multi-targets every modern .NET the package claims to support, running against each real
+	     runtime: this is the actual "8/9/10/11 all work" verification, not just asset selection. -->
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net8.0;net9.0;net10.0;net11.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Exact version: a floating version would prefer a higher published package from
+		     nuget.org over the freshly packed local one. CI/release flows override the version
+		     with -p:SmokePackageVersion so the smoke test always consumes the built package. -->
+		<PackageReference Include="Luces.Mediator" Version="$(SmokePackageVersion)" Condition="'$(SmokePackageVersion)' != ''" />
+		<PackageReference Include="Luces.Mediator" Version="1.0.0" Condition="'$(SmokePackageVersion)' == ''" />
+		<!-- Registration extensions (AddSingleton etc.) live in the DI implementation package,
+		     which the core library intentionally does not pull in. -->
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
+	</ItemGroup>
+
+</Project>
+
+
